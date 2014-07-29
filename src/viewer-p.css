@@ -1,0 +1,108 @@
+html {
+    overflow: hidden; 
+}
+body {
+    margin: 10px;
+    padding: 0;
+}
+div#content {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+div#images {
+	overflow-y: hidden;
+	overflow-x: auto;
+    white-space: nowrap;
+	height: 100px;
+   	border: 3px solid #000;
+   	position: fixed;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+}
+.current-slide {
+    background-color: #ccf;
+}
+
+div#view {
+	position: fixed;
+	top: 110px;
+	bottom: 5px;
+	left: 5px;
+	right: 5px;
+    background-image: url('images/UPMC_logo_sm.jpg');
+    background-color: white;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 3px solid #000;
+    color: white;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+    
+}
+.thumbnail-img {
+	max-width: 85px;
+    max-height:85px;
+    width: auto;
+    height: auto;
+	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+
+}
+.thumbnail-div {
+	display: inline-block;
+	text-align: center;
+	vertical-align: top;
+	width: 90px;
+    height: 90px;
+	border: 2px solid #000;
+	margin: 2px;
+	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+	
+}
+.thumbnail-snapshot {
+	display: inline-block;
+	vertical-align: top;
+	text-align: left;
+	margin: 2px;
+}
+.thumbnail-a {
+	text-align: left;
+	font-weight: normal;
+	font-size: medium;
+	padding-right: 20px;
+}
+.tag {
+	font-size: 0;
+	margin-left: 5px;
+	margin-right: 5px;
+	max-height: 100px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	display: inline-block;
+	white-space: nowrap;
+}
+
+#snapshot {
+	position: fixed;
+	top: 115px;
+	left: 175px;
+}
+#image-container{
+	display: inline-block;
+	white-space: nowrap;
+	position: relative;
+	float: left;
+}
+div#view.fullpage {
+    left: 0;
+    border: 0;
+}

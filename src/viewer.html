@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Digital Slide Viewer</title>
+<link rel="stylesheet" type="text/css" media="screen and (orientation:landscape) " href="viewer-l.css"/>
+<link rel="stylesheet" type="text/css" media="screen and (orientation:portrait)" href="viewer-p.css"/>
+<!--[if lt IE 9]>
+<link rel="stylesheet" type="text/css" media="all" href="viewer-l.css"/>
+<![endif]-->
+</head>
+
+<body>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="openseadragon.min.js"></script> 
+<script type="text/javascript" src="viewer.js"></script> 
+<script type="text/javascript" src="config.js"></script> 
+<div id="content">
+ 	<div id="images"><div id="image-container"></div></div>
+    <div id="view" ></div>
+	<input type="image" id="snapshot" onclick="doSnapshot();" src="images/snapshot_rest.png" title="Take Snapshot"/>
+</div>
+<iframe frameborder="0" width="0" height="0" scrolling="no" id="loginframe" src=""> </iframe>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	setupControls();
+	
+	// define server and images to open
+	var caseName = "Case1";
+	var props   = SERVER_PROPERTIES;
+	var images  = [{type: "aperio", name: "6365", path: "other/6365.svs", tag: "H&E"},
+				   {type: "aperio", name: "6367", path: "other/6367.svs", tag: "S100"},
+				   {type: "aperio", name: "6368", path: "other/6368.svs", tag: "H&E"},
+				   {type: "hamamatsu", name: "KM13-000414_HE_1_KM130420", path: "76577", tag: "H&E"},
+			 	   {type: "snapshot", name: "figure.1.lena", path: "http://docs.opencv.org/_images/lena.png", tag: "Snapshots"},
+				   {type: "snapshot", name: "figure.2.cat", path: "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg", tag: "Snapshots"},
+				   {type: "snapshot", name: "figure.2.cw2", path: "KM10-4/special/cw2.jpg", tag: "Snapshots"},
+				   ];
+	// load images into a strip
+	loadImages(props,images,caseName);
+	document.title = "View: "+caseName;
+});	
+</script>
+</body>
+</html>

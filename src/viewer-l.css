@@ -1,0 +1,91 @@
+html {
+    overflow: hidden;
+}
+body {
+    margin: 10px;
+    padding: 0;
+}
+
+div#content {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+}
+div#images {
+    position: fixed;
+    top: 5px;
+    left: 5px;
+    width: 150px;
+    bottom: 5px;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+    border: 3px solid #000;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.current-slide {
+    background-color: #ccf;
+}
+
+
+
+div#view {
+    position: fixed;
+    right: 5px;
+    left: 160px;
+    top: 5px;
+    bottom: 5px;
+    background-image: url('images/UPMC_logo_sm.jpg');
+    background-color: white;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 3px solid #000;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+    color: white;
+}
+.thumbnail-img {
+	max-width: 90%;
+    max-height:70px;
+    width: auto;
+    height:auto !important;
+	height:90px;
+}
+.thumbnail-div {
+	text-align: center;
+	width: 90%;
+    height: 70px;
+	border: 2px solid #000;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+.thumbnail-snapshot {
+	text-align: left;
+	overflow: none;
+	width: 90%;
+    margin-top: 2px;
+	margin-bottom: 2px;
+}
+.thumbnail-a {
+	text-align: left;
+	font-weight: normal;
+	font-size: medium;
+}
+.tag {
+	font-weight: bold;
+	font-size: large;
+	margin-left: 10px;
+	margin-top: 10px;
+}
+div#view.fullpage {
+    left: 0;
+    border: 0;
+}
+#snapshot {
+	position: fixed;
+	top: 10px;
+	left: 330px;
+}
