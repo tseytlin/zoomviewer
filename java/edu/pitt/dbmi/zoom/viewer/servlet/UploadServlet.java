@@ -1,4 +1,4 @@
-package edu.pitt.dbmi.telepath.viewer.servlet;
+package edu.pitt.dbmi.zoom.viewer.servlet;
 
 
 import java.io.*;
