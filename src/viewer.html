@@ -28,10 +28,10 @@ $(document).ready(function() {
 	// define server and images to open
 	var caseName = "Case1";
 	var props   = SERVER_PROPERTIES;
-	var images  = [{type: "aperio", name: "6365", path: "other/6365.svs", tag: "H&E"},
-				   {type: "aperio", name: "6367", path: "other/6367.svs", tag: "S100"},
-				   {type: "aperio", name: "6368", path: "other/6368.svs", tag: "H&E"},
-				   {type: "hamamatsu", name: "KM13-000414_HE_1_KM130420", path: "76577", tag: "H&E"},
+	var images  = [{type: "openslide", name: "6365", path: "other/6365.svs", tag: "H&E"},
+				   {type: "openslide", name: "6367", path: "other/6367.svs", tag: "S100"},
+				   {type: "openslide", name: "6368", path: "other/6368.svs", tag: "H&E"},
+				   {type: "openslide", name: "KM13-000414_HE_1_KM130420", path: "76577", tag: "H&E"},
 			 	   {type: "snapshot", name: "figure.1.lena", path: "http://docs.opencv.org/_images/lena.png", tag: "Snapshots"},
 				   {type: "snapshot", name: "figure.2.cat", path: "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg", tag: "Snapshots"},
 				   {type: "snapshot", name: "figure.2.cw2", path: "KM10-4/special/cw2.jpg", tag: "Snapshots"},
