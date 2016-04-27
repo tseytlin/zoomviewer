@@ -1,5 +1,6 @@
 var SERVER_PROPERTIES  = {		
-		snapshot:  {url: "http://some.server.com/openslide?action=file&root=image&path="},
 		aperio:    { url:  "http://some.server.com/"},
-		hamamatsu: { url:  "http://some.server.com/NDPServe.dll"} 
+		hamamatsu: { url:  "http://some.server.com/NDPServe.dll"},
+		openslide: { url: "http://some.server.com/image"},
+		snapshot:  {url:  "http://some.server.com/image?action=file&path="}
 };
