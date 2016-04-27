@@ -6,26 +6,35 @@ var THUMBNAIL_WIDTH=180;
 // this is for estimating max levels
 var MIN_SLIDE_WIDTH=500;
 
-// define upload servlet
-var USE_PROXY_FOR_IMAGES = true;
-var PROXY_SERVLET = "http://some.server.com/any/proxy?url=";
-var UPLOAD_SERVLET = "http://some.server.com/servlet/UploadServlet";
+// define servlets
+//Proxy servlet directs JSON calls
+//Upload servlet saves snapshots to server
+var PROXY_SERVLET =  "http://some.server.com/proxy?url=";
+var UPLOAD_SERVLET = "http://some.server.com/upload";
+
+//The proxy server was previously used more extensively to avoid
+//cross-domain security (CORS) problems.
+//Currently, CORS headers are set in Apache Tomcat, so proxy is used less often,
+//but still used to direct JSON calls
+var USE_PROXY_FOR_IMAGES = false;	//The proxy allows us to avoid 
 
 //OpenSlide Server action strings
 var OPENSLIDE_INFO_REQUEST = "?action=info&path=";
 var OPENSLIDE_THUMBNAIL_REQUEST = "?action=image&path=";
 var OPENSLIDE_REGION_REQUEST = "?action=region&path=";
 
-// this is SAME ORIGIN workaround proxy
-// Adds "Access-Control-Allow-Origin: *" in the response header to everywhere.
+//Prepare a var for the viewer used to view slides
 var viewer;
-
 
 // save list of images and properties
 var sourceImages;
 var sourceProperties;
 var sourceCase;
+
+//Save reference to open slide image
 var currentImage;
+
+var snapshotDiv = "snapshot";	//Save the location on the area within page to save snapshots, default is "snapshot"
 
 /**
  * redirect through some proxy URL
@@ -33,7 +42,7 @@ var currentImage;
 function redirect(url,jsonp){
 	var SUFFIX = jsonp?"&callback=?":"";
 	var ANYORIGIN = PROXY_SERVLET;
-	var url = ANYORIGIN+encodeURIComponent(url)+SUFFIX;
+	var url = ANYORIGIN+escape(url)+SUFFIX;
 	return url;
 }
 
@@ -90,8 +99,7 @@ function openViewer(source){
 	viewer.open(source);
 	currentImage = source;
 	
-	// show hide snapshot button if viewing
-	// screenshot or not
+	// hide snapshot button if viewing screenshot
 	if(source.maxLevel == 1){
 		$("#snapshot").hide();
 		viewer.setMouseNavEnabled(false);
@@ -119,18 +127,48 @@ function setupControls(){
 /**
  * load a set of images into sources array
  * and add them to #images
- * @param images
- * @param sources
+ * @param props List of root URL's to reference for various image types
+ * @param images list of images; for each image, contains information including a type (e.g. "openslide"), 
+ * a filepath, and a tag to use when adding the image to the webpage
+ * @param name the case name
  */
 function loadImages(props,images,name){
 	sourceImages = images;
 	sourceProperties = props;
 	sourceCase = name;
+		
+	// derive image names
+	for(var i=0; i < images.length; i++){
+		//If there's already a name, use it
+		//otherwise, create one
+		if (images[i].name == "") {
+			if (images[i].type == "snapshot") {
+				//To get the image name of a snapshot, simply use the file name without the suffix
+				var endIndex = images[i].path.lastIndexOf('.');
+				images[i].name = images[i].path.substr(0, endIndex);
+			}
+			else if (images[i].type == "label") {
+				//Remove label files from the array, we're not viewing labels at this time
+				images.splice(i,1);
+				i--;
+			}
+			else {
+				//Full slides; extract stain and slide number from slide file path
+				nameParts = images[i].path.split("_");
+				var stain = nameParts[1];
+				var slideID = nameParts[2];
+				images[i].name = slideID+"-"+stain;
+				if (stain == "H&E") stain = "HE";
+				images[i].tag = stain;
+			}
+		}
+	}
 	
 	//Sort slides
-	//Partly to affect order of display, partly to look for duplicate names
-	//Because Mirax files include a paired one-layer TIFF file, if these files have the same name element, 
-	// the TIFF can be used as the thumbnail rather than viewed as a separate slide.
+	//Full slide names should start with the slide number, so full slides will come first in numerical order
+	//Snapshots should start with "figure", followed by snapshot #; so snapshots will all follow full slides and appear in numerical order
+	//(Snapshots are currently placed in a separate block of the page, as well)
+	//var orderedImages = [];
 	images.sort(function(a, b){return ((a.name<b.name)?-1:1)});
 	/*Slides are sorted in reverse order, and will be processed from the end of the list to the start
 	 * this is done to make it easier to filter out files that we don't actually want to view;
@@ -138,8 +176,7 @@ function loadImages(props,images,name){
 	 * (currently we'll use those as the thumbnails but not view them as full slides)
 	 * Slides will now be processed in order; however, order of display will still depend on
 	 * how quickly ajax requests come back from the OpenSlide server */
-	 
-	// load sorted images
+	
 	//load sorted images
 	for (var i=0; i<images.length; i++) {
 		var imageDone = false;	//flag to allow us to break out of loop early
@@ -186,16 +223,24 @@ function loadImages(props,images,name){
 	}
 }
 
-
 /**
- * load snapshot to sources
- * @param image
+ *Create a tilesource for viewing a snapshot in the viewer
+ * @param prop URL root to use when accessing the image
+ * @param image contains information about the image (including name and file path)
  */
 function loadSnapshot(prop,image){
+	//Construct the full URL for accessing the image
 	var url = image.path;
-	if(!/^https?:\/\//i.test(url)) {
+	/*if(!/^https?:\/\//i.test(url)) {
 		url = prop.url+url;
+	}*/
+	if (url.indexOf("snapshots\\") == -1) {
+		//If the url doesn't include the path to the snapshot folder, add it
+		url = sourceCase+"\\snapshots\\"+url;
 	}
+	url = prop.url+url;
+	//Open the image in order to derive information that the viewer will need 
+	//when we truly access the image for viewing
 	var img = new Image();
 	img.src = url;
 	img.onload = function(){
@@ -203,11 +248,11 @@ function loadSnapshot(prop,image){
 		// add to list of sources
 		var source = {
 			width:  img.width,
-	        height: img.height,
+			height: img.height,
 	    	tileSize: img.width,
-	        maxLevel: 1,
-	        imageURL: url,
-	        getTileUrl: function( level, x, y ){
+			maxLevel: 1,
+			imageURL: new String(url),
+			getTileUrl: function( level, x, y ){
 	        	return this.imageURL;
 	        }
 		};
@@ -216,7 +261,6 @@ function loadSnapshot(prop,image){
 		addImage(image,source);
 	};
 }
-
 
 /**
  * load Aperio image to sources array
@@ -235,7 +279,7 @@ function loadAperioImage(prop,image){
 		image.thumbnail = imageURL+"0+0+"+THUMBNAIL_WIDTH+"+-1";
 		
 		if(USE_PROXY_FOR_IMAGES){
-			image.thumbnail = redirect(image.thumbnail,false);;
+			image.thumbnail = redirect(image.thumbnail,false);
 		}
 		
 		// add to list of sources
@@ -258,11 +302,12 @@ function loadAperioImage(prop,image){
         
 		// add image to the slider
 		addImage(image,source);
+		
 	});
 }
 
 /**
- * load Aperio image to sources array
+ * load Hamamatsu image to sources array
  * @param props
  * @param image
  * @param sources
@@ -310,6 +355,7 @@ function loadHamamatsuImage(prop,image){
 				var imageLevels = Math.floor(Math.log(imageWidth/MIN_SLIDE_WIDTH)/Math.LN2);
 				var sourceLense = +($xml.find("sourcelens").text());
 				var imageURL = prop.url+"?nspGetImage?ItemID="+id;
+				//alert(imageURL);
 				var frameHeight = THUMBNAIL_WIDTH*imageHeight/imageWidth;
 				// add some properties to an image object
 				image.name = $xml.find("name").text();
@@ -388,6 +434,7 @@ function loadMiraxImage(prop, image, presumedMatch) {
 	//Aside from using the TIFF as the thumbnail, loading will proceed using OpenSlide
 	loadOpenslideImage(prop, image);
 }
+
 
 /**
  * load image to sources array for image formats supported by OpenSlide
@@ -470,6 +517,9 @@ function loadOpenslideImage(prop,image){
 		//Extract the tilesize 
 		var tileSizeHeight = +(imageInfo.item("tile.height"));
 		var tileSizeWidth = +(imageInfo.item("tile.width"));
+		//OpenSeadragon can also take tileOverlap, aspectRatio as TileSource properties,
+		//but these don't seem to be available in Hamamatsu and Aperio data
+		//May need to determine these for other file types
 		
 		var imageURL = image.path;
 		//If thumbnail already defined (e.g. for a Mirax with a paired TIFF), leave it; otherwise set up thumbbnail
@@ -502,7 +552,8 @@ function loadOpenslideImage(prop,image){
 			imageLevels = 10;
 		}
 		//Adjust for aspect ratio 
-		if (aspectRatio > 2.3) {
+		//if (aspectRatio > 2.3) {
+		if (aspectRatio > 1.9) {
 			//For wide images
 			if (imageLevels > 6) {
 				imageLevels--;	//Decrease unless we're already at a low (6) # levels
@@ -522,10 +573,13 @@ function loadOpenslideImage(prop,image){
 			tileWidth: tileSizeWidth,
 			tileHeight: tileSizeHeight,
 			maxLevel: imageLevels,
+			//minLevel: 0,
+			//tileOverlap: 1,
 			imageURL: imageURL,
 			displayAspectRatio: aspectRatio,
 			
 			getTileUrl: function( level, x, y ){
+				//alert(x+", "+y+", "+level);
 				p = Math.pow(2,level);
 
 				x = Math.floor((x*this.width)/(p*this.displayAspectRatio));
@@ -546,10 +600,10 @@ function loadOpenslideImage(prop,image){
 }
 
 /**
- * show images on the images strip
- * @param images
- * @param sources
- * @returns
+ * show image on the images strip
+ * @param image information on the image, including name, file path, thumbnail, type, 
+ * and a tag to use when placing the thumbnail on the web page
+ * @param source TileSource to provide to the OpenSeadragon viewer
  */
 function addImage(image,source){
 	// add image info to source
@@ -588,14 +642,21 @@ function addImage(image,source){
 	});
 }
 
+//Pad a number with leading zeros and truncate to a desired size, returning a string
 function pad(num, size) {
     var s = "000000000" + num;
     return s.substr(s.length-size);
 }
 
+/* Create a snapshot of the current image in the viewer
+ * @param offs starting figure number; typically 0 (we'll determine the figure #) but might want to preset it to be at least a certain number
+ */
 function doSnapshot(offs){
 	try{
+		//Get the image from the canvas
 		var canvas = document.getElementsByTagName("canvas")[0];
+		
+		//get information about the image
 		var caseName = sourceCase;
 		var slideName = currentImage.info.name;
 		
@@ -609,13 +670,17 @@ function doSnapshot(offs){
 			alert("Error: Exceeded maximum number of snapshots for this case");
 			return;
 		}
-		
 		var name = "figure."+pad(offs,2)+"."+slideName;
-		var path = caseName+"/snapshots/"+name+".jpg"; 
-		var image = {type:"snapshot",name:name,path:path,tag:"Snapshots",n:sourceImages.length};
+		var path = caseName+"\\snapshots\\"+name+".jpg"; 
+		//Construct image information for the snapshot
+		var image = {type:"snapshot",name:name,path:path,tag:snapshotDiv,n:sourceImages.length};
+		
+		//Convert the canvas image to jpeg format
 		var dataURL = canvas.toDataURL("image/jpeg");
 		
-		$.post(UPLOAD_SERVLET,{data:dataURL,path:path,action:"upload",root:"image"}).done(function(data) {
+		//Create a data packet and use it for an Ajax request to the Upload servlet	
+		var postData = {data:dataURL,path:path,action:"upload",root:"image"};
+		var postReturn = $.post(UPLOAD_SERVLET,postData).done(function(data) {
 			//process the data returned by the Ajax request
 			if (data.substring(0,5) == "Error") {
 				if (data.indexOf("already exists") >-1) {
