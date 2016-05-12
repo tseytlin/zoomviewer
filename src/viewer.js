@@ -36,6 +36,39 @@ var currentImage;
 
 var snapshotDiv = "snapshot";	//Save the location on the area within page to save snapshots, default is "snapshot"
 
+//Explicitely turn momentum scrolling ("flick") off for all input types in Openseadragon viewer,
+//per pathologist request
+var ourGestureSettingsMouse = {
+	scrollToZoom: true,
+	clickToZoom: true,
+	dblClickToZoom: false,
+	pinchToZoom: false,
+	flickEnabled: false,
+	flickMinSpeed: 120,
+	flickMomentum: 0,
+	pinchRotate: false
+}
+var ourGestureSettingsTouch = {
+	scrollToZoom: false,
+	clickToZoom: false,
+	dblClickToZoom: true,
+	pinchToZoom: true,
+	flickEnabled: false,
+	flickMinSpeed: 120,
+	flickMomentum: 0,
+	pinchRotate: false
+}
+var ourGestureSettingsPen = {
+	scrollToZoom: false,
+	clickToZoom: true,
+	dblClickToZoom: false,
+	pinchToZoom: false,
+	flickEnabled: false,
+	flickMinSpeed: 120,
+	flickMomentum: 0,
+	pinchRotate: false
+}
+	
 /**
  * redirect through some proxy URL
  */
@@ -87,6 +120,10 @@ function openViewer(source){
 			showNavigator:  showControls,
 			showNavigationControl: showControls,
 			//preserveViewport: true,	//only relevent if we have a sequence of images, could revisit in future
+			gestureSettingsMouse: ourGestureSettingsMouse,
+			gestureSettingsTouch: ourGestureSettingsTouch,
+			gestureSettingsPen: ourGestureSettingsPen,
+			gestureSettingsUnknown: ourGestureSettingsMouse,
 			crossOriginPolicy: 'anonymous'
 			//ajaxWithCredentials: true	//not relevent to current security settings
 		});
@@ -496,22 +533,42 @@ function loadOpenslideImage(prop,image){
 		imageLevels--;	//levels are 0-indexed, so highest available level is level count - 1
 		*/
 		
-		//extract image width (if initial attempt undefined, try alternative labels)
-		var imageWidth = +(imageInfo.item("image.width"));
-		if (imageWidth==undefined) {
+		//Extract image height & width
+		//First try openslide.bounds (defined for Mirax)
+		//If undefined (e.g. non-Mirax), try image.width or image.height
+		//If still undefined, try alternative labels
+		
+		var imageWidth = +(imageInfo.item("openslide.bounds-width"));
+		if ((imageWidth==undefined) || (isNaN(imageWidth))) {
+			imageWidth = +(imageInfo.item("image.width"));
+		}
+		if ((imageWidth==undefined) || (isNaN(imageWidth))) {
 			imageWidth = +(imageInfo.item("openslide.level[0].width"));
 		}
-		if (imageWidth==undefined) {
+		if ((imageWidth==undefined) || (isNaN(imageWidth))) {
 			imageWidth = +(imageInfo.item("layer.0.width"));
 		}
 		
-		//extract image height (if initial attempt undefined, try alternative labels)
-		var imageHeight = +(imageInfo.item("image.height"));
-		if (imageHeight==undefined) {
+
+		var imageHeight = +(imageInfo.item("openslide.bounds-height"));
+		if ((imageHeight==undefined) || (isNaN(imageHeight))) {
+			imageHeight = +(imageInfo.item("image.height"));
+		}
+		if ((imageHeight==undefined) || (isNaN(imageHeight))) {
 			imageHeight = +(imageInfo.item("openslide.level[0].height"));
 		}
-		if (imageHeight==undefined) {
+		if ((imageHeight==undefined) || (isNaN(imageHeight))) {
 			imageHeight = +(imageInfo.item("layer.0.height"));
+		}
+		
+		//If openslide.bounds-(x,y) defined, extract; otherwise set startX, startY to (0,0)
+		var startX = +(imageInfo.item("openslide.bounds-x"));
+		if ((startX==undefined) || (isNaN(startX))) {
+			startX = 0;
+		}
+		var startY = +(imageInfo.item("openslide.bounds-y"));
+		if ((startY==undefined) || (isNaN(startY))) {
+			startY = 0;
 		}
 		
 		//Extract the tilesize 
@@ -542,10 +599,10 @@ function loadOpenslideImage(prop,image){
 		else if (imageSize < 6) {
 			imageLevels = 7;
 		}
-		else if (imageSize < 15) {	
+		else if (imageSize < 16) {	
 			imageLevels = 8;
 		}
-		else if (imageSize < 25) {
+		else if (imageSize < 40) {
 			imageLevels = 9;
 		}
 		else {
@@ -573,6 +630,8 @@ function loadOpenslideImage(prop,image){
 			tileWidth: tileSizeWidth,
 			tileHeight: tileSizeHeight,
 			maxLevel: imageLevels,
+			initX: startX,
+			initY: startY,
 			//minLevel: 0,
 			//tileOverlap: 1,
 			imageURL: imageURL,
@@ -586,6 +645,9 @@ function loadOpenslideImage(prop,image){
 				y = Math.floor((y*this.height)/(p));
 				w = Math.floor(this.width/(p*this.displayAspectRatio));
 				h = Math.floor(this.height/p);
+				
+				x = x+this.initX;
+				y = y+this.initY;
 				
 				url = this.imageURL;
 				url = prop.url+OPENSLIDE_REGION_REQUEST+url;
