@@ -15,9 +15,9 @@
 <script type="text/javascript" src="viewer.js"></script> 
 <script type="text/javascript" src="config.js"></script> 
 <div id="content">
- 	<div id="images"><div id="image-container"></div></div>
+ 	<div id="images"><div id="image-container"><div id="HE" class="tag"></div></div></div>
     <div id="view" ></div>
-	<input type="image" id="snapshot" onclick="doSnapshot();" src="images/snapshot_rest.png" title="Take Snapshot"/>
+	<input type="image" id="snapshot" onclick="doSnapshot(1);" src="images/snapshot_rest.png" title="Take Snapshot"/>
 </div>
 <iframe frameborder="0" width="0" height="0" scrolling="no" id="loginframe" src=""> </iframe>
 
@@ -28,13 +28,9 @@ $(document).ready(function() {
 	// define server and images to open
 	var caseName = "Case1";
 	var props   = SERVER_PROPERTIES;
-	var images  = [{type: "aperio", name: "6365", path: "other/6365.svs", tag: "H&E"},
-				   {type: "aperio", name: "6367", path: "other/6367.svs", tag: "S100"},
-				   {type: "aperio", name: "6368", path: "other/6368.svs", tag: "H&E"},
-				   {type: "hamamatsu", name: "KM13-000414_HE_1_KM130420", path: "76577", tag: "H&E"},
-			 	   {type: "snapshot", name: "figure.1.lena", path: "http://docs.opencv.org/_images/lena.png", tag: "Snapshots"},
-				   {type: "snapshot", name: "figure.2.cat", path: "http://s3.amazonaws.com/rapgenius/filepicker%2FvCleswcKTpuRXKptjOPo_kitten.jpg", tag: "Snapshots"},
-				   {type: "snapshot", name: "figure.2.cw2", path: "KM10-4/special/cw2.jpg", tag: "Snapshots"},
+	var images  = [{type: "openslide", name: "APERIO_7", path: "KW16-000001_APERIO_7_U00000X.svs", tag: "H&E"},
+				   {type: "openslide", name: "HAMAMATSU_3", path: "KW16-000001_HAMAMATSU_3_U00000X.ndpi", tag: "S100"},
+				   {type: "snapshot", name: "figure.01.7-APERIO", path: "Case1\\snapshots\\figure.01.7-APERIO.jpg", tag: "Snapshots"},
 				   ];
 	// load images into a strip
 	loadImages(props,images,caseName);
